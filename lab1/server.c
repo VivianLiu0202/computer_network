@@ -12,6 +12,12 @@ const int PORT=8080; // 服务器监听的端口号
 //缓冲区用来存放客户端发来的消息，每个客户端对应一个缓冲区
 #define MAX_CLIENTS 4 //最大客户端数量
 
+//定义了服务器的socket、新连接的客户端的socket
+//两个地址结构体来存储服务器和客户端的地址信息。
+int server_socket, new_socket, *new_sock;
+struct sockaddr_in server_addr, client_addr;
+socklen_t addr_size;
+
 int client_sockets[MAX_CLIENTS];// client_sockets存储所有连接的客户端的套接字
 int client_count = 0;//使用client_count来跟踪当前连接的客户端数量
 int client_sockets_status[MAX_CLIENTS];//记录当前的socket数组位置是否为空
@@ -58,7 +64,6 @@ void *handle_client(void *client_socket)
         Recvbuffer[read_size] = '\0';//消息字符串以空字符结尾
         //如果客户端发来的消息是EXIT，则退出
         if (strcmp(Recvbuffer, "EXIT") == 0) {
-            read_size=0;
             break;
         }
         //将消息添加时间戳
@@ -67,28 +72,25 @@ void *handle_client(void *client_socket)
         sprintf(Sendbuffer, "client %d: %s", sock,Recvbuffer);
 
         //====================== 向其他socket都发送消息 =====================
-        for (int i = 0; i < client_count; i++) {
-            if (client_sockets_status[i] == 1) {
-                send(client_sockets[i], Sendbuffer, strlen(Sendbuffer), 0);
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+            if (client_sockets_status[i] == 1 && client_sockets[i] != sock) {
+                int send_result = send(client_sockets[i], Sendbuffer, strlen(Sendbuffer), 0);
+                if (send_result <= 0) { // 如果发送失败，更新客户端sockets的状态
+                    printf("Client %d disconnected unexpectedly.\n", client_sockets[i]);
+                    client_sockets_status[i] = 0;
+                    client_sockets[i] = 0;
+                    client_count--;
+                }
             }
         } 
     }     
-    if(read_size == 0){
-        for(int i=0;i<client_count;i++){
+    if(strcmp(Recvbuffer, "EXIT") == 0 || read_size == 0){
+        for(int i=0;i<MAX_CLIENTS;i++){
             if(client_sockets[i]==sock) {
-                time_t rawtime;
-                struct tm * timeinfo;
-                char time_stamp[80];
-
-                //获取当前时间
-                time(&rawtime);
-                timeinfo = localtime(&rawtime);
-
-                //格式化时间
-                strftime(time_stamp, sizeof(time_stamp), "%Y-%m-%d %H:%M:%S", timeinfo);
-                printf("Client %d exit, number of current clients: %d. TIME: %s \n", sock, client_count-1, time_stamp);
+                printf("Client %d exit, number of current clients: %d.\n", sock, client_count-1);
                 client_sockets_status[i]=0;
-                client_count--;
+                client_sockets[i]=0;
+                client_count=client_count-1;
 
                 //关闭客户端的socket，释放分配的内存，并结束线程
                 close(sock);
@@ -108,12 +110,6 @@ void *handle_client(void *client_socket)
 }
 
 int main() {
-    //定义了服务器的socket、新连接的客户端的socket
-    //两个地址结构体来存储服务器和客户端的地址信息。
-    int server_socket, new_socket, *new_sock;
-    struct sockaddr_in server_addr, client_addr;
-    socklen_t addr_size;
-
     printf("服务器启动\n");
 
     //创建一个新的socket来监听客户端的连接请求。如果创建失败，则打印错误消息并退出程序。
@@ -161,10 +157,10 @@ int main() {
         }
         int temp = client_status();//返回数组中的空位；
         client_sockets_status[temp] = 1;
-        client_sockets[client_count] = new_socket;
+        client_sockets[temp] = new_socket;
         client_count++;
         //打印一条消息，显示已接受的客户端的IP地址和端口号。
-        printf("成功连接 %s:%d clients(%d)\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port),client_sockets[client_count-1]);
+        printf("成功连接 %s:%d clients(%d)\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port),new_socket);
         printf("Now the number of clients is: %d\n",client_count);
 
         //新建线程，并为新的socket分配内存

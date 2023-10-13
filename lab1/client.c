@@ -8,9 +8,6 @@
 //定义了服务器的端口号和缓冲区大小
 const int PORT= 8080;
 #define BUFFER_SIZE 2048
-//定义客户端client，服务器地址结构和消息缓冲区
-int client_socket;
-struct sockaddr_in server_addr;
 
 //为接收服务器消息的线程设计的。它接受一个socket作为参数。
 void *receive_messages(void *socket) {
@@ -34,6 +31,9 @@ void *receive_messages(void *socket) {
 }
 
 int main() {
+    //定义客户端client，服务器地址结构和消息缓冲区
+    int client_socket;
+    struct sockaddr_in server_addr;
 
     printf("客户端启动\n");
 
@@ -44,7 +44,7 @@ int main() {
         perror("创建socket: failed\n");
         return -1;
     }
-    printf("创建socket:%d success\n",client_socket);
+    printf("创建socket: success\n");
 
     //=========================服务器地址=========================
     //设置服务器地址结构。这里，客户端尝试连接到本地地址127.0.0.1和之前定义的端口号
