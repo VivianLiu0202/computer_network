@@ -155,6 +155,7 @@ int main() {
             close(new_socket);
             continue;
         }
+        
         int temp = client_status();//返回数组中的空位；
         client_sockets_status[temp] = 1;
         client_sockets[temp] = new_socket;
