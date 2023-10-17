@@ -7,7 +7,7 @@
 
 //定义了服务器的端口号和缓冲区大小
 const int PORT= 8080;
-#define BUFFER_SIZE 2048
+#define BUFFER_SIZE 4096
 
 //为接收服务器消息的线程设计的。它接受一个socket作为参数。
 void *receive_messages(void *socket) {

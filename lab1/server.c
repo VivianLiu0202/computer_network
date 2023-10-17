@@ -8,7 +8,7 @@
 #include <errno.h>
 
 const int PORT=8080; // 服务器监听的端口号
-#define BUFFER_SIZE 2048 //消息缓冲区大小
+#define BUFFER_SIZE 4096 //消息缓冲区大小
 //缓冲区用来存放客户端发来的消息，每个客户端对应一个缓冲区
 #define MAX_CLIENTS 4 //最大客户端数量
 
@@ -54,8 +54,8 @@ void add_info(char* message){
 void *handle_client(void *client_socket) 
 {
     int sock = *(int *)client_socket; //获取客户端的socket
-    char Recvbuffer[BUFFER_SIZE]; //接受消息的缓冲区
-    char Sendbuffer[BUFFER_SIZE]; //发送消息的缓冲区
+    char Recvbuffer[BUFFER_SIZE+20]; //接受消息的缓冲区
+    char Sendbuffer[BUFFER_SIZE+20]; //发送消息的缓冲区
     int read_size; //存储接收到的消息的大小
 
     while((read_size=recv(sock, Recvbuffer, BUFFER_SIZE, 0))>0)
@@ -68,7 +68,7 @@ void *handle_client(void *client_socket)
         }
         //将消息添加时间戳
         add_info(Recvbuffer);
-        printf("client %d: %s \n", sock ,Recvbuffer);
+        printf("client %d: %s  Bytes:%d\n", sock ,Recvbuffer,read_size);
         sprintf(Sendbuffer, "client %d: %s", sock,Recvbuffer);
 
         //====================== 向其他socket都发送消息 =====================
@@ -113,7 +113,7 @@ int main() {
     printf("服务器启动\n");
 
     //创建一个新的socket来监听客户端的连接请求。如果创建失败，则打印错误消息并退出程序。
-    server_socket = socket(AF_INET, SOCK_STREAM, 0);//创建一个TCP套接字,AF_INET表示IPv4
+    server_socket = socket(AF_INET, SOCK_STREAM, 0);//创建一个TCP套接字,AF_INET表示IPv4，SOCK_STREAM表示套接字类型，这个是TCP套接字，0表示使用默认的协议也就是TCP
     if (server_socket == -1) {
         perror("创建socket: failed!\n");
         exit(EXIT_FAILURE);
