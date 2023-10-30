@@ -4,6 +4,10 @@
 
 <h5><center>2112614 刘心源</center></h5>
 
+[TOC]
+
+
+
 # 一、Web服务器
 
 ### 实验环境
@@ -71,7 +75,7 @@
 sudo tcpdump -i lo0 -w capture.pcap '(src host 127.0.0.1 and dst host 127.0.0.1) and (port 8080)'
 ```
 
-将捕获的循环流量保存到`capture.pcap`，并使用`wireshark`打开文件并分析。
+将捕获的循环流量保存到`capture.pcap`，并使用wireshark打开文件并分析。
 
 
 
@@ -218,7 +222,7 @@ Flags：ACK（确认控制位），SYN（同步控制位）
 
 #### 第三次握手
 
-![image-20231025182619456](typora/image-20231025182619456.png)
+<img src="typora/image-20231025182619456.png" alt="image-20231025182619456" style="zoom:40%;" />
 
 Source Port：59231
 
@@ -397,14 +401,28 @@ alt-svc: quic=":443";ma=2592000;v="36,35,34"
   - 请求方式：`GET`
   - 请求URL：/，也就是服务器的根目录
   - 版本协议：1.1
+  
 - 请求头：
   - `Host`：主机名，是127.0.0.1:8080
+  
   - `Connection`：`keep-alive`，指示服务器保持TCP连接，不要在响应后关闭它。
+  
+    注意⚠️：`keep-alive`：在HTTP/1.0中，默认的连接是非持久的，这意味着每个请求/响应对之后，连接都会被关闭。为了优化性能，HTTP/1.0引入了`keep-alive`连接选项，它允许在一个持久连接上发送多个请求/响应对，从而减少了每次建立新连接的开销。
+  
+    在HTTP/1.1中，持久连接成为了默认行为，而不再需要显式地使用`keep-alive`头。但是，如果客户端或服务器想关闭连接，它们可以设置`Connection: close`头来显式地关闭连接。
+  
+    使用持久连接的主要优点是减少了TCP连接的建立和关闭所带来的延迟，从而提高了Web页面的加载速度。
+  
   - `sec-ch-ua` 和 `sec-ch-ua-mobile`和`sec-ch-ua-platform`: 是与用户代理字符串有关的新HTTP头。它们提供了浏览器和平台的信息。
+  
   - `User-Agent`:提供了发起请求的浏览器和操作系统的详细信息。这里使用的是发出请求的是运行在`Mac OS X 10.15.7`上的Safari浏览器，版本15.6.1。
+  
   - `Accept`: 描述了客户端接受哪些类型的响应内容。
+  
   - `Sec-Fetch-*`: 这些头部与请求的来源、模式、用户和目的地有关，用于增强安全性。
+  
   - `Accept-Encoding: gzip, deflate`: 表示浏览器支持的内容编码，这里是gzip和deflate压缩。
+  
   - `Accept-Language: zh-CN,zh-Hans;q=0.9`: 告诉服务器，优先返回简体中文内容
 
 在TCP层，客户端发送标志位PSH和ACK，然后服务器端回复ACK表示收到
@@ -415,7 +433,7 @@ alt-svc: quic=":443";ma=2592000;v="36,35,34"
 
 ##### 服务器端发送响应报文
 
-![image-20231025184245377](typora/image-20231025184245377.png)
+<img src="typora/image-20231025184245377.png" alt="image-20231025184245377" style="zoom:40%;" />
 
 - 状态行：
   - HTTP版本：1.1
@@ -442,7 +460,7 @@ alt-svc: quic=":443";ma=2592000;v="36,35,34"
 
 #### 第二轮请求应答
 
-![image-20231025184631208](typora/image-20231025184631208.png)
+<img src="typora/image-20231025184631208.png" alt="image-20231025184631208" style="zoom:30%;" />
 
 - 大体与第一轮类似，只是这次请求与应答的是图片logo.jpg，因此URL变为 /logo.jpg
 
@@ -452,7 +470,7 @@ alt-svc: quic=":443";ma=2592000;v="36,35,34"
 
   - **TCP分段**：TCP将应用层的数据单元（PDU）分为大小适中的段（segment），以便于在网络中传输。这个过程中的每一个段的大小通常不会超过所设置的最大段大小（MSS，Maximum Segment Size）。MSS是一个TCP连接上可以发送的数据的最大量，不包括TCP头部。在这里MSS已经在三次握手时声明为16344。
   
-    <img src="typora/image-20231025185631682.png" alt="image-20231025185631682" style="zoom:40%;" />
+    <img src="typora/image-20231025185631682.png" alt="image-20231025185631682" style="zoom: 40%;" />
   
   - **TCP segment of a reassembled PDU**：如果一个应用层的消息因为太大而被TCP分成了多个段进行发送，那么除了最后一个段之外，其他的段都会被标记为“TCP segment of a reassembled PDU”。这个标记是为了提示接收方，这个段是一个更大消息的一部分，需要进行重新组装。
   
@@ -501,9 +519,7 @@ alt-svc: quic=":443";ma=2592000;v="36,35,34"
 
 大部分与传送logo.jpg相似，不同的是最后HTTP的响应报文，此时响应的状态码不是`200 OK`而是`206 Partial Content`。注意到此时应该是音乐文件还没有点击播放的时候，因此服务器仅发送了部分的数据包给客户端。
 
-![image-20231025193559630](typora/image-20231025193559630.png)
-
-~~此处有疑问:为什么这里的Media type与URL不匹配~~
+<img src="typora/image-20231027175545260.png" alt="image-20231027175545260" style="zoom:40%;" />
 
 
 
@@ -531,11 +547,42 @@ Content-Type: audio/mpeg\r\n
 
 这个特性在视频流、大文件下载等场景中特别有用，允许客户端只请求它所需要的数据部分，从而实现断点续传和节省带宽。
 
+同时注意到3365242正好是这首音乐占用空间的大小：
+
+<img src="typora/940381698399833_.pic.jpg" alt="940381698399833_.pic" style="zoom: 50%;" />
+
+说明正好传送完成。
+
+
+
+#### 补充：遇到的其他状态码
+
+中途还会遇到其他上面没有遇到的状态码，比如`304 Not Modified`
+
+![Uploaded image](https://files.oaiusercontent.com/file-DQOIokj9TNi2OsOeA4zML5qI?se=2023-10-27T11%3A30%3A23Z&sp=r&sv=2021-08-06&sr=b&rscc=max-age%3D3599%2C%20immutable&rscd=attachment%3B%20filename%3Dimage.png&sig=GF6qEVpoZtuKCyA7cBDlKsN9gfd/P4Nm1EPD4XSdKHo%3D)
+
+Frame 27中服务器返回304，这是一个HTTP响应状态码，它表明客户端请求的资源没有被修改，所以客户端可以继续使用其缓存的版本。
+
+当客户端之前已经请求并缓存了一个资源，并且再次请求这个资源时，它可以发送一个带有`If-Modified-Since`或`If-None-Match`头的请求。这些头部分别包含客户端最后一次获取资源时的时间戳或ETag值。
+
+- `If-Modified-Since`: 这个头部告诉服务器：如果自提供的日期以来资源已经被修改过，那么就返回新的资源内容；如果没有被修改，就返回一个304状态码。
+- `If-None-Match`: 这个头部包含一个ETag值，这是一个可以用来识别资源版本的标识符。如果ETag匹配，说明资源没有被修改，服务器会返回304状态码；否则，返回新的资源内容。
+
+当服务器收到带有这些头部的请求时，它会检查资源是否自那时起有过任何修改。如果资源没有被修改，服务器就会返回`304 Not Modified`状态码，并且不会发送资源的内容。这可以节省带宽并加快加载时间，因为客户端可以直接从其缓存中加载资源，而不需要再次从服务器下载
+
+![Uploaded image](https://files.oaiusercontent.com/file-ZgQkrd3N64bkxz4azcbNGuam?se=2023-10-27T11%3A30%3A23Z&sp=r&sv=2021-08-06&sr=b&rscc=max-age%3D3599%2C%20immutable&rscd=attachment%3B%20filename%3Dimage.png&sig=Tb8Ob0O0gelChu1adcYICCwooYx8WSyF%2B0PiBeTyr64%3D)
+
+"TCP Retransmission" 是 Transmission Control Protocol (TCP) 的重传机制的表示。当TCP数据包在网络中传输时，接收端通常会发送一个确认（ACK）来告知发送端它已经接收到这个数据包。如果发送端在一个特定的时间内没有收到这个确认，它会认为数据包可能在传输过程中丢失，并尝试重新发送这个数据包。这个过程被称为"TCP Retransmission"。
+
+简单来说，TCP Retransmission 是TCP协议为确保数据包可靠传输而采用的一种机制。如果发送端认为一个数据包没有被成功接收，它会再次发送这个数据包。在网络传输中，由于各种原因（例如网络拥堵、路由器故障等），数据包有可能会丢失，所以这种重传机制对于确保网络通信的可靠性非常重要。
+
+
+
 
 
 ### TCP四次挥手
 
-- TCP释放连接的过程叫做挥手，断开连接需要发送四个包，这四个包分别为：主动关闭方的FIN、被动关闭方的ACK、被动关闭方的FIN、以及主动关闭方的ACK。这四个包确保了双方都知道对方已经完成了数据传输并同意断开连接。
+- **TCP释放连接的过程叫做挥手**，断开连接需要发送四个包，这四个包分别为：主动关闭方的FIN、被动关闭方的ACK、被动关闭方的FIN、以及主动关闭方的ACK。这四个包确保了双方都知道对方已经完成了数据传输并同意断开连接。
 - TCP是全双工的，这意味着数据可以在连接的两个方向上同时传输。因此，每个方向都必须单独关闭。这也是为什么即使一个方向上的数据传输已经完成，连接也不会立即关闭。
 - 在TCP连接中，客户端和服务器都有能力主动关闭连接。不总是客户端先关闭，服务器也可以主动发起关闭过程。一旦TCP连接被关闭，与之相关的资源（如缓存、变量和其他系统资源）会被释放，这样系统可以重新利用这些资源。在我们的抓包文件中时客户端发起的终止连接。
 
@@ -561,7 +608,7 @@ Content-Type: audio/mpeg\r\n
 
 #### 第一次挥手
 
-![image-20231025194734311](typora/image-20231025194734311.png)
+<img src="typora/image-20231025194734311.png" alt="image-20231025194734311" style="zoom: 33%;" />
 
 Source Port：8080（服务器）
 
@@ -585,7 +632,7 @@ Flags：ACK（确认控制位），FIN（关闭，Finish）
 
 #### 第二次挥手
 
-![image-20231025195809810](typora/image-20231025195809810.png)
+<img src="typora/image-20231025195809810.png" alt="image-20231025195809810" style="zoom:33%;" />
 
 Source Port：59231（服务器）
 
@@ -609,7 +656,7 @@ Flags：ACK（确认控制位）
 
 #### 第三次挥手
 
-![image-20231025200024331](typora/image-20231025200024331.png)
+<img src="typora/image-20231025200024331.png" alt="image-20231025200024331" style="zoom:33%;" />
 
 Source Port：59231（服务器）
 
@@ -662,8 +709,62 @@ A1：MSL（Maximum Segment Lifetime），TCP允许不同的实现可以设置不
 第一，保证客户端发送的最后一个ACK报文能够到达服务器，因为这个ACK报文可能丢失，站在服务器的角度看来，我已经发送了FIN+ACK报文请求断开了，客户端还没有给我回应，应该是我发送的请求断开报文它没有收到，于是服务器又会重新发送一次，而客户端就能在这个2MSL时间段内收到这个重传的报文，接着给出回应报文，并且会重启2MSL计时器。
 第二，防止类似与“三次握手”中提到了的“已经失效的连接请求报文段”出现在本连接中。客户端发送完最后一个确认报文后，在这个2MSL时间中，就可以使本连接持续的时间内所产生的所有报文段都从网络中消失。这样新的连接中不会出现旧连接的请求报文。
 
+
+
 ### Q2：为什么建立连接是三次握手，关闭连接确是四次挥手呢？
 
 建立连接的时候， 服务器在LISTEN状态下，收到建立连接请求的SYN报文后，把ACK和SYN放在一个报文里发送给客户端。
 而关闭连接时，服务器收到对方的FIN报文时，仅仅表示对方不再发送数据了但是还能接收数据，而自己也未必全部数据都发送给对方了，所以己方可以立即关闭，也可以发送一些数据给对方后，再发送FIN报文给对方来表示同意现在关闭连接，因此，己方ACK和FIN一般都会分开发送，从而导致多了一次。
 
+
+
+### Q3：为什么第一次GET /music.mp3只请求2bytes？
+
+<img src="typora/image-20231027180248900.png" alt="image-20231027180248900" style="zoom:30%;" />
+
+**资源预览**：在某些应用场景中，客户端可能只想预览资源的开始部分，例如音频或视频播放器可能只请求前几个字节来快速获取元数据或检测文件类型
+
+**资源类型检测**：有时，客户端请求资源的前几个字节来确定其类型。例如，许多文件格式都有独特的“魔数”或文件签名位于文件的开头，可以用来快速识别文件的格式。
+
+根据已有的资料，推测客户端是需要确定文件的类型：
+
+`.mp3`文件，尤其是那些带有ID3标签的文件，通常在其开头有一个特定的文件签名。
+
+- 如果文件开始于`ID3`，那么该文件很可能有一个ID3v2标签。`ID3`字符串对应于字节`49 44 33`。
+- 对于不带ID3标签的纯MP3帧，它们不具有固定的文件签名，但每个MP3帧的头几个字节都有特定的结构和同步字节，这可以用于确定其为MP3数据。
+
+本music.mp3文件不带ID3标签，因此只请求了前两个字节～
+
+
+
+### Q4：TCP报文的选项option字段
+
+
+TCP报文头部的选项字段提供了一种机制，使得TCP能够支持各种附加功能，如最大分段大小、时间戳、窗口扩大等。以下是一些常见的TCP选项字段：
+
+1. **End of Option List (EOL)**:
+   - 指示选项字段的结束。
+2. **No Operation (NOP)**:
+   - 也称为Pad，它用于对齐其他选项。
+3. **Maximum Segment Size (MSS)**:
+   - 最大分段大小。这是一个建议值，表示在不需要进行分片的情况下，TCP数据段的最大允许大小。通常，在TCP三次握手的SYN报文中，连接的双方会交换它们所支持的MSS值。
+4. **Window Scale (WS)**:
+   - 窗口扩大因子。TCP使用窗口缩放选项来扩大发送和接收的窗口大小，这样可以支持更大的窗口值，从而提高数据传输的效率。WS值表示要将窗口字段左移的位数。
+5. **Timestamps (TS)**:
+   - **TSval (Timestamp Value)**:
+     - 时间戳值。它表示发送该TCP段的时刻。时间戳选项可以用来改善TCP的性能，特别是在计算往返时间 (RTT) 时。
+   - **TSecr (Timestamp Echo Reply)**:
+     - 时间戳应答值。当一个TCP段带有时间戳选项时，对方在响应中会将这个时间戳值原样返回，这样发送者就可以知道对方何时接收到了原始报文。
+6. **Selective Acknowledgment (SACK) Permitted & SACK**:
+   - SACK Permitted用于指示是否允许使用选择性确认功能。
+   - SACK用于指定接收端已成功接收的非连续的数据块。
+7. **Partial Order Connection Permitted (POCP) & Partial Order Service Profile (POSP)**:
+   - 这些选项与部分顺序传输有关。
+8. **Alternate Checksum Request & Alternate Checksum Data**:
+   - 用于支持除默认的Internet校验和之外的其他校验和。
+9. **TCP Fast Open (TFO)**:
+   - 用于减少开启新连接时的延迟。
+10. **User Timeout Option (UTO)**:
+    - 允许主机为TCP连接指定不同的超时时间。
+11. **Multipath TCP (MPTCP)**:
+    - 允许一个TCP连接使用多个路径进行传输。
