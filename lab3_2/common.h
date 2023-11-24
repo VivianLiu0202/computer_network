@@ -19,9 +19,9 @@
 
 const int MAX_BUFFER_SIZE = 20000000; //最大文件大小
 const int MAX_PACKET_SIZE = 10000; //单个数据包大小
-const int MAX_REPEAT_TIMES = 3000; //最大发送次数
-const int TIMEOUT_MILLISECONDS = 100; // 超时时间
-const int WINODWS_SIZE = 5; // 窗口大小
+const int MAX_REPEAT_TIMES = 60000; //最大发送次数
+const int TIMEOUT_MILLISECONDS = 300; // 超时时间
+const int WINODWS_SIZE = 10; // 窗口大小
 
 const char* IP = "127.0.0.1"; //服务器、路由器、客户端IP地址
 
@@ -30,6 +30,7 @@ const unsigned short ACK = 0x2;
 const unsigned short FIN = 0x4;
 const unsigned short INFO = 0x8;
 const unsigned short DATA = 0x10;
+const unsigned short REPEAT = 0x20;
 
 #pragma pack(1) // 让编译器将结构体数据强制连续排列，禁止优化存储结构进行对齐
 struct Packet {

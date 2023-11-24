@@ -1,9 +1,10 @@
 // client.cpp
 #include "common.h"
+#include <mutex>
 using namespace std;
 
-const uint32_t ROUTER_PORT = 30000; // 路由器端口号
-const uint32_t CLIENT_PORT = 20000; // client端口号
+const uint32_t ROUTER_PORT = 33333; // 路由器端口号
+const uint32_t CLIENT_PORT = 22222; // client端口号
 
 int ClientSeq = 0;
 int ServerSeq = 0;
@@ -15,6 +16,7 @@ int pktStart;
 bool sendAgain = 0;
 bool finished = 0;
 
+std::mutex mtx;
 //实现三次握手 ~
 bool Connect_Server(SOCKET &clientSocket, sockaddr_in &serverAddr){
     int AddrLen = sizeof(serverAddr);
@@ -254,6 +256,8 @@ struct parameters {
 	int pktSum;
 };
 
+
+//一个线程用于发送文件数据，另一个线程用于接收确认消息（ACK）
 //接收ack的线程
 DWORD WINAPI recvThread(PVOID pParam)
 {
@@ -270,14 +274,19 @@ DWORD WINAPI recvThread(PVOID pParam)
 		Packet recvPacket;
 		int recvSize = recvfrom(clientSocket, (char*)&recvPacket, sizeof(recvPacket), 0, (sockaddr*)&serverAddr, &AddrLen);
 		if (recvSize > 0){
+            if (recvPacket.type & REPEAT){
+                cout << "接收到重复确认包，确认号为" << recvPacket.ack_no << endl;
+                continue;
+            }
 			//成功收到消息，且notcorrupt
 			if (recvPacket.Check()){
 				if (recvPacket.ack_no >= base) base = recvPacket.ack_no + 1;
 				if (base != nextseqnum) pktStart = clock();
-				cout << "client已收到【ack = " << recvPacket.ack_no << "】的确认报文" << endl;
 
+                std::lock_guard<std::mutex> lock(mtx);
+				cout << "\n#----接收RECV----#Client已收到【ack = " << recvPacket.ack_no << "】的确认报文" << endl;
 				//打印窗口情况
-                cout << "【窗口情况】 窗口总大小：" << WINODWS_SIZE << "，已发送但未收到ACK：" << nextseqnum - base << "，尚未发送：" << WINODWS_SIZE - (nextseqnum - base) <<'\n';
+                cout << "【窗口信息】 窗口总大小：" << WINODWS_SIZE << "，base = "<<base<<" , nextseqnum = "<<nextseqnum<<",已发送但未收到ACK：" << nextseqnum - base << "，尚未发送：" << WINODWS_SIZE - (nextseqnum - base) <<'\n';
 
 				//判断结束的情况
 				if (recvPacket.ack_no == pktSum - 1){
@@ -295,7 +304,9 @@ DWORD WINAPI recvThread(PVOID pParam)
 					mistake_count++;
 				}
 
-				if (mistake_count == 3) sendAgain = 1;//重新发送
+				if (mistake_count == 3) {
+                    sendAgain = 1;//重新发送
+                }
 			}
 			//若校验失败或ack不对，则忽略，继续等待
 		}
@@ -304,8 +315,7 @@ DWORD WINAPI recvThread(PVOID pParam)
 }
 
 
-
-void clientSendFunction_GBN(string filename, SOCKET clientSocket, SOCKADDR_IN serverAddr)
+void ClientSendRecvFile(string filename, SOCKET clientSocket, SOCKADDR_IN serverAddr)
 {
     //打开文件
     ifstream file(filename,ios::in|ios::binary);
@@ -376,6 +386,7 @@ void clientSendFunction_GBN(string filename, SOCKET clientSocket, SOCKADDR_IN se
 				ContentPacket.ScrPort = CLIENT_PORT;
 				ContentPacket.DestPort = ROUTER_PORT;
 				ContentPacket.seq_no = nextseqnum;
+                ContentPacket.type += DATA;
 				for (int j = 0; j < LeaveSize; j++)
 					ContentPacket.data[j] = filebuf[FillCount * MAX_PACKET_SIZE + j];
 				ContentPacket.setChecksum();
@@ -384,6 +395,7 @@ void clientSendFunction_GBN(string filename, SOCKET clientSocket, SOCKADDR_IN se
 				ContentPacket.ScrPort = CLIENT_PORT;
 				ContentPacket.DestPort = ROUTER_PORT;
 				ContentPacket.seq_no = nextseqnum;
+                ContentPacket.type += DATA;
 				for (int j = 0; j < MAX_PACKET_SIZE; j++)
 					ContentPacket.data[j] = filebuf[(nextseqnum - 1) * MAX_PACKET_SIZE + j];
 				ContentPacket.setChecksum();
@@ -391,18 +403,25 @@ void clientSendFunction_GBN(string filename, SOCKET clientSocket, SOCKADDR_IN se
 
 			//send_pkt
 			sendto(clientSocket, (char*)&ContentPacket, sizeof(ContentPacket), 0, (sockaddr*)&serverAddr, sizeof(SOCKADDR_IN));
-			cout << "Client已发送【Seq = " << ContentPacket.seq_no << "】的报文段！" << endl;
+
+            std::lock_guard<std::mutex> lock(mtx);
+			cout << "\n【!!!!发送SEND!!!!】Client已发送【seq = " << ContentPacket.seq_no << "】的报文段！" << endl;
 			if (base == nextseqnum){
 				pktStart = clock();
 			}
 			nextseqnum++;
 			//打印窗口情况
-            cout << "【窗口情况】 窗口总大小：" << WINODWS_SIZE << "，已发送但未收到ACK：" << nextseqnum - base<< "，尚未发送：" << WINODWS_SIZE - (nextseqnum - base) <<'\n';
+            cout << "【窗口信息】 窗口总大小：" << WINODWS_SIZE << "，base = "<<base<<" , nextseqnum = "<<nextseqnum<<",已发送但未收到ACK：" << nextseqnum - base << "，尚未发送：" << WINODWS_SIZE - (nextseqnum - base) <<'\n';
 		}
 
 		//timeout
 		if (clock() - pktStart> TIMEOUT_MILLISECONDS || sendAgain){
-			if (sendAgain) cout << "连续收到三次冗余ACK，快速重传......" << endl;
+            totalTimeOut++;
+			if (sendAgain) 
+            {
+                std::lock_guard<std::mutex> lock(mtx);
+                cout << "【快速重传】连续收到三次错误ACK: 开始【快速重传】......" << endl;
+            }
 			//重发当前缓冲区的message
 			Packet ContentPacket;
 			for (int i = 0; i < nextseqnum - base; i++){
@@ -412,7 +431,7 @@ void clientSendFunction_GBN(string filename, SOCKET clientSocket, SOCKADDR_IN se
                     ContentPacket.DestPort = ROUTER_PORT;
                     ContentPacket.length = FileSize;
                     ContentPacket.type += INFO;
-                    ContentPacket.seq_no = nextseqnum;
+                    ContentPacket.seq_no = sendnum;
                     for(int i=0;i<FILENAME.length();i++)
                         ContentPacket.data[i] = FILENAME[i];
                     ContentPacket.data[FILENAME.length()] = '\0';
@@ -421,7 +440,7 @@ void clientSendFunction_GBN(string filename, SOCKET clientSocket, SOCKADDR_IN se
 				else if (sendnum == FillCount + 1 && LeaveSize > 0){
                     ContentPacket.ScrPort = CLIENT_PORT;
                     ContentPacket.DestPort = ROUTER_PORT;
-                    ContentPacket.seq_no = nextseqnum;
+                    ContentPacket.seq_no = sendnum;
                     for (int j = 0; j < LeaveSize; j++)
                         ContentPacket.data[j] = filebuf[FillCount * MAX_PACKET_SIZE + j];
                     ContentPacket.setChecksum();
@@ -429,13 +448,17 @@ void clientSendFunction_GBN(string filename, SOCKET clientSocket, SOCKADDR_IN se
 				else{
                     ContentPacket.ScrPort = CLIENT_PORT;
                     ContentPacket.DestPort = ROUTER_PORT;
-                    ContentPacket.seq_no = nextseqnum;
+                    ContentPacket.seq_no = sendnum;
                     for (int j = 0; j < MAX_PACKET_SIZE; j++)
-                        ContentPacket.data[j] = filebuf[(nextseqnum - 1) * MAX_PACKET_SIZE + j];
+                        ContentPacket.data[j] = filebuf[(sendnum - 1) * MAX_PACKET_SIZE + j];
                     ContentPacket.setChecksum();
+                   // int result = sendto(clientSocket, (char*)&ContentPacket, sizeof(ContentPacket), 0, (sockaddr*)&serverAddr, sizeof(SOCKADDR_IN));
 				}
-				sendto(clientSocket, (char*)&ContentPacket, sizeof(ContentPacket), 0, (sockaddr*)&serverAddr, sizeof(SOCKADDR_IN));
-				cout << "seq = " << ContentPacket.seq_no << "的报文段已超时，正在重传......" << endl; 
+				int result = sendto(clientSocket, (char*)&ContentPacket, sizeof(ContentPacket), 0, (sockaddr*)&serverAddr, sizeof(SOCKADDR_IN));
+                {
+                    std::lock_guard<std::mutex> lock(mtx);
+				    cout << "seq = " << ContentPacket.seq_no << "的报文段已超时，正在重传......" << endl; 
+                }
 
 			}
 			pktStart = clock();
@@ -455,7 +478,7 @@ void clientSendFunction_GBN(string filename, SOCKET clientSocket, SOCKADDR_IN se
     float throughput = (float)FileSize/time;
     cout<<"吞吐率："<<throughput<<"B/s = "<<throughput/1024<<"KB/s"<<endl;
     cout<<"传输文件大小："<<FileSize<<"B = "<<FileSize/1024<<"KB"<<endl;
-    //cout<<"超时发送数据包："<<totalTimeOut<<endl;
+    cout<<"超时发送数据包："<<totalTimeOut<<endl;
     cout<<"-----------------传输情况总结---------------"<<endl;
     return ;
 }
@@ -521,7 +544,7 @@ int main() {
         string filename;
         cin>>filename;
         //ClientSendFile(filename,clientSocket,serverAddr);
-        clientSendFunction_GBN(filename, clientSocket,serverAddr);
+        ClientSendRecvFile(filename, clientSocket,serverAddr);
         cout<<"是否继续传输？(n/n)"<<endl;
         char c;
         cin>>c;
@@ -540,5 +563,6 @@ int main() {
 
     closesocket(clientSocket);
     WSACleanup();
+    system("pause");
     return 0;
 }

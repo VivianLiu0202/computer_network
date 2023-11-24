@@ -4,8 +4,8 @@ using namespace std;
 
 int ClientSeq = 0;
 int ServerSeq = 0;
-const uint32_t ROUTER_PORT = 30000; // 路由器端口号
-const uint32_t SERVER_PORT = 10000; // 服务器
+const uint32_t ROUTER_PORT = 33333; // 路由器端口号
+const uint32_t SERVER_PORT = 11111; // 服务器
 
 //实现三次握手 返回true表示握手成功
 bool Connect_Client(SOCKET serverSocket, sockaddr_in clientAddr){
@@ -205,6 +205,7 @@ bool ServerReceivePacket(Packet& recvPacket, SOCKET serverSocket, SOCKADDR_IN cl
 				sendPacket.DestPort = ROUTER_PORT;
 				sendPacket.type += ACK;
 				sendPacket.ack_no = recvPacket.seq_no;
+
 				sendPacket.setChecksum();
 				sendto(serverSocket, (char*)&sendPacket, sizeof(sendPacket), 0, (sockaddr*)&clientAddr, sizeof(SOCKADDR_IN));
 				cout << "Server收到 Seq = " << recvPacket.seq_no << "的报文段，并回复 ack = " << sendPacket.ack_no << " 的回复报文段" << endl;
@@ -223,7 +224,7 @@ bool ServerReceivePacket(Packet& recvPacket, SOCKET serverSocket, SOCKADDR_IN cl
 				sendPacket.ack_no = expectSeq - 1;
 				sendPacket.setChecksum();
 				sendto(serverSocket, (char*)&sendPacket, sizeof(sendPacket), 0, (sockaddr*)&clientAddr, sizeof(SOCKADDR_IN));
-				cout << "【累计确认（失序）】server收到 Seq = " << recvPacket.seq_no << "的报文段，并发送 Ack = " << sendPacket.ack_no << " 的回复报文段" << endl;
+				cout << "【失序！累计确认】server收到 Seq = " << recvPacket.seq_no << "的报文段，并发送 Ack = " << sendPacket.ack_no << " 的回复报文段" << endl;
 			}
 		}
 		else if (recvSize == 0)
@@ -256,6 +257,7 @@ void ServerReceiveFile(SOCKET serverSocket, SOCKADDR_IN clientAddr)
                     }
                 }
 				cout<<"\n接受文件名为："<<FileName<<",大小为"<<FileSize<<"字节"<<endl;
+                expectSeq = recvInfoPacket.seq_no;
 
 				//回复ACK
 				Packet sendPacket;
@@ -278,6 +280,7 @@ void ServerReceiveFile(SOCKET serverSocket, SOCKADDR_IN clientAddr)
 				sendPacket.ScrPort = SERVER_PORT;
 				sendPacket.DestPort = ROUTER_PORT;
 				sendPacket.type += ACK;
+                sendPacket.type += REPEAT;
 				sendPacket.ack_no = expectSeq - 1;//累计确认
 
 				sendPacket.setChecksum();
