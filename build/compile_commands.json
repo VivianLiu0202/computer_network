@@ -1,0 +1,14 @@
+[
+{
+  "directory": "C:/Users/liuvivian/Desktop/computer_network/build",
+  "command": "C:\\MinGW\\bin\\g++.exe   -g -std=gnu++11 -Wall -o CMakeFiles\\client.dir\\client.cpp.obj -c C:\\Users\\liuvivian\\Desktop\\computer_network\\lab3_2\\client.cpp",
+  "file": "C:/Users/liuvivian/Desktop/computer_network/lab3_2/client.cpp",
+  "output": "CMakeFiles/client.dir/client.cpp.obj"
+},
+{
+  "directory": "C:/Users/liuvivian/Desktop/computer_network/build",
+  "command": "C:\\MinGW\\bin\\g++.exe   -g -std=gnu++11 -Wall -o CMakeFiles\\server.dir\\server.cpp.obj -c C:\\Users\\liuvivian\\Desktop\\computer_network\\lab3_2\\server.cpp",
+  "file": "C:/Users/liuvivian/Desktop/computer_network/lab3_2/server.cpp",
+  "output": "CMakeFiles/server.dir/server.cpp.obj"
+}
+]

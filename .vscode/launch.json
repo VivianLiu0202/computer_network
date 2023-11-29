@@ -6,8 +6,8 @@
       "type": "lldb",
       "request": "launch",
       "args": [],
-      "cwd": "/Users/liuvivian/computer_network/lab1",
-      "program": "/Users/liuvivian/computer_network/lab1/build/Debug/outDebug"
+      "cwd": "/Users/liuvivian/computer_network/lab2",
+      "program": "/Users/liuvivian/computer_network/lab2/build/Debug/outDebug"
     }
   ]
 }

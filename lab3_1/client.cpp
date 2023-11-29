@@ -2,9 +2,9 @@
 #include "common.h"
 using namespace std;
 
-const uint32_t ROUTER_PORT = 30000; // Â·ÓÉÆ÷¶Ë¿ÚºÅ
+const uint32_t ROUTER_PORT = 30000; // Â·ï¿½ï¿½ï¿½ï¿½ï¿½Ë¿Úºï¿½
 
-const uint32_t CLIENT_PORT = 20000; // client¶Ë¿ÚºÅ
+const uint32_t CLIENT_PORT = 20000; // clientï¿½Ë¿Úºï¿½
 
 int ClientSeq = 0;
 int ServerSeq = 0;
@@ -13,16 +13,16 @@ int totalTimeOut = 0;
 
 
 
-//ÊµÏÖÈý´ÎÎÕÊÖ ~
+//Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ~
 bool Connect_Server(SOCKET &clientSocket, sockaddr_in &serverAddr){
     int AddrLen = sizeof(serverAddr);
-    cout<<"-----------------¿ªÊ¼Èý´ÎÎÕÊÖ-----------------"<<endl;
+    cout<<"-----------------ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½-----------------"<<endl;
     Packet Packet1;
     Packet Packet2;
     Packet Packet3;
 
-    //µÚÒ»´ÎÎÕÊÖ SYN=1 seq=x
-    cout<<"----------------¿ªÊ¼µÚÒ»´ÎÎÕÊÖ-----------------"<<endl;
+    //ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ SYN=1 seq=x
+    cout<<"----------------ï¿½ï¿½Ê¼ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½-----------------"<<endl;
     Packet1.ScrPort = CLIENT_PORT;
     Packet1.DestPort = ROUTER_PORT;
     Packet1.type = SYN;
@@ -34,64 +34,64 @@ bool Connect_Server(SOCKET &clientSocket, sockaddr_in &serverAddr){
     int sendSize = sendto(clientSocket, (char *)(&Packet1), sizeof(Packet1), 0, (SOCKADDR *)&serverAddr, AddrLen);
     if (sendSize <= 0) {
         int error = WSAGetLastError();
-        cout << "·¢ËÍÊ§°Ü£¬´íÎó´úÂë£º" << error << endl;
+        cout << "ï¿½ï¿½ï¿½ï¿½Ê§ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ë£?" << error << endl;
         return false;
     }
-    cout<<"Client·¢ËÍµÚÒ»´ÎÎÕÊÖ:SYN!"<<endl;
+    cout<<"Clientï¿½ï¿½ï¿½Íµï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½:SYN!"<<endl;
 
-    //½ÓÊÕµÚ¶þ´ÎÎÕÊÖ SYN=1 ACK=1 ack=x
+    //ï¿½ï¿½ï¿½ÕµÚ¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ SYN=1 ACK=1 ack=x
     clock_t start1 = clock();
-    cout<<"----------------½ÓÊÜµÚ¶þ´ÎÎÕÊÖ-----------------"<<endl;
+    cout<<"----------------ï¿½ï¿½ï¿½ÜµÚ¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½-----------------"<<endl;
     int ReSendCount = 0;
     while(1){
         int recvSize = recvfrom(clientSocket, (char *)(&Packet2), sizeof(Packet2), 0, (SOCKADDR*)&serverAddr, &AddrLen);
         if (recvSize > 0) {
             if((Packet2.type & ACK) && (Packet2.type & SYN) && Packet2.ack_no == Packet1.seq_no+1 && Packet2.Check()){
-                cout<<"ClientÊÕµ½µÚ¶þ´ÎÎÕÊÖ:ACK,SYN"<<endl;
+                cout<<"Clientï¿½Õµï¿½ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½:ACK,SYN"<<endl;
                 ServerSeq = Packet2.seq_no;
-                cout<<"ServerµÄseq_no="<<ServerSeq<<endl;
+                cout<<"Serverï¿½ï¿½seq_no="<<ServerSeq<<endl;
                 break;
             }
             else{
                 if(!(Packet2.type & ACK) || !(Packet2.type & SYN)){
-                    cout<<"µÚ¶þ´ÎÎÕÊÖ±ê¼Ç´íÃ»ÓÐACK/SYN"<<endl;
+                    cout<<"ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö±ï¿½Ç´ï¿½Ã»ï¿½ï¿½ACK/SYN"<<endl;
                     return false;
                 }
                 else if(Packet2.ack_no != Packet1.seq_no+1){
-                    cout<<"µÚ¶þ´ÎÎÕÊÖÐòÁÐºÅ´íÎó"<<endl;
+                    cout<<"ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÐºÅ´ï¿½ï¿½ï¿½"<<endl;
                     return false;
                 }
                 else if(!Packet2.Check()){
-                    cout<<"µÚ¶þ´ÎÎÕÊÖÐ£ÑéºÍ´íÎó"<<endl;
+                    cout<<"ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð£ï¿½ï¿½Í´ï¿½ï¿½ï¿?"<<endl;
                     return false;
                 }
             }
         }
 
-        //³¬Ê±´¦Àí£¬ÖØÐÂ·¢ËÍÊý¾Ý°ü
+        //ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý°ï¿½
         else if(clock() - start1 > TIMEOUT_MILLISECONDS){
             if(ReSendCount == MAX_REPEAT_TIMES){
-                cout<<"µÚ¶þ´ÎÎÕÊÖ³¬Ê±,ÖØ´«´ÎÊý³¬¹ý"<<MAX_REPEAT_TIMES<<"´Î£¬Á¬½ÓÊ§°Ü£¡"<<endl;
+                cout<<"ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö³ï¿½Ê±,ï¿½Ø´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"<<MAX_REPEAT_TIMES<<"ï¿½Î£ï¿½ï¿½ï¿½ï¿½ï¿½Ê§ï¿½Ü£ï¿½"<<endl;
                 return false;
             }
             ReSendCount++;
-            cout<<"µÚ¶þ´ÎÎÕÊÖ³¬Ê±£¬ÖØÐÂ·¢ËÍµÚÒ»´ÎÎÕÊÖÊý¾Ý°ü......"<<endl;
+            cout<<"ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö³ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½Íµï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý°ï¿½......"<<endl;
             int SendSize = sendto(clientSocket, (char *)(&Packet1), sizeof(Packet1), 0, (SOCKADDR*)&serverAddr, AddrLen);
             start1 = clock();
             if (SendSize <=0) {
-                cout<<"µÚÒ»´ÎÎÕÊÖÔÙ´Î·¢ËÍÊ§°Ü£¡"<<endl;
+                cout<<"ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù´Î·ï¿½ï¿½ï¿½Ê§ï¿½Ü£ï¿½"<<endl;
                 return false;
             }
             else{
-                cout<<"µÚÒ»´ÎÎÕÊÖÔÙ´Î·¢ËÍ³É¹¦£¡"<<endl;
+                cout<<"ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù´Î·ï¿½ï¿½Í³É¹ï¿½ï¿½ï¿½"<<endl;
                 continue;
             }
         }
 
     }
 
-    //µÚÈý´ÎÎÕÊÖ ACK=1 seq=x+1
-    cout<<"----------------¿ªÊ¼µÚÈý´ÎÎÕÊÖ-----------------"<<endl;
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ACK=1 seq=x+1
+    cout<<"----------------ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½-----------------"<<endl;
     Packet3.ScrPort = CLIENT_PORT;
     Packet3.DestPort = ROUTER_PORT;
     Packet3.type = ACK;
@@ -101,25 +101,25 @@ bool Connect_Server(SOCKET &clientSocket, sockaddr_in &serverAddr){
     Packet3.setChecksum();
     int SendSize = sendto(clientSocket, (char *)(&Packet3), sizeof(Packet3), 0, (SOCKADDR*)&serverAddr, AddrLen);
     if (SendSize<=0) {
-        cout<<"µÚÈý´ÎÎÕÊÖÏûÏ¢·¢ËÍÊ§°Ü"<<endl;
+        cout<<"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½Ê§ï¿½ï¿½"<<endl;
         return false;
     }
-    cout<<"Client·¢ËÍµÚÈý´ÎÎÕÊÖ:ACK!"<<endl;
-    cout<<"-----------------Èý´ÎÎÕÊÖ³É¹¦-----------------"<<endl;
+    cout<<"Clientï¿½ï¿½ï¿½Íµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½:ACK!"<<endl;
+    cout<<"-----------------ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö³É¹ï¿½-----------------"<<endl;
     return true;
 }
 
-//ÊµÏÖËÄ´Î»ÓÊÖ~
+//Êµï¿½ï¿½ï¿½Ä´Î»ï¿½ï¿½ï¿½~
 bool Close_Connect_Server(SOCKET &clientSocket, sockaddr_in &serverAddr){
     int AddrLen = sizeof(serverAddr);
-    cout<<"-----------------¿ªÊ¼ËÄ´Î»ÓÊÖ-----------------"<<endl;
+    cout<<"-----------------ï¿½ï¿½Ê¼ï¿½Ä´Î»ï¿½ï¿½ï¿½-----------------"<<endl;
     Packet Packet1;
     Packet Packet2;
     Packet Packet3;
     Packet Packet4;
 
-    //µÚÒ»´Î»ÓÊÖ FIN=1 seq=y
-    cout<<"----------------¿ªÊ¼µÚÒ»´Î»ÓÊÖ-----------------"<<endl;
+    //ï¿½ï¿½Ò»ï¿½Î»ï¿½ï¿½ï¿½ FIN=1 seq=y
+    cout<<"----------------ï¿½ï¿½Ê¼ï¿½ï¿½Ò»ï¿½Î»ï¿½ï¿½ï¿½-----------------"<<endl;
     Packet1.ScrPort = CLIENT_PORT;
     Packet1.DestPort = ROUTER_PORT;
     Packet1.type = FIN;
@@ -130,134 +130,134 @@ bool Close_Connect_Server(SOCKET &clientSocket, sockaddr_in &serverAddr){
     int sendSize1 = sendto(clientSocket, (char *)(&Packet1), sizeof(Packet1), 0, (SOCKADDR*)&serverAddr, AddrLen);
     clock_t start1 = clock();
     if (sendSize1 <= 0) {
-        cout<<"µÚÒ»´Î»ÓÊÖÏûÏ¢·¢ËÍÊ§°Ü£¡"<<endl;
+        cout<<"ï¿½ï¿½Ò»ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½Ê§ï¿½Ü£ï¿½"<<endl;
         return false;
     }
-    cout<<"Client·¢ËÍµÚÒ»´Î»ÓÊÖÏûÏ¢:FIN!"<<endl;
+    cout<<"Clientï¿½ï¿½ï¿½Íµï¿½Ò»ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢:FIN!"<<endl;
 
-    //½ÓÊÜµÚ¶þ´Î»ÓÊÖ µÈ´ý·þÎñÆ÷»Ø¸´ ack=y ACK=1
+    //ï¿½ï¿½ï¿½ÜµÚ¶ï¿½ï¿½Î»ï¿½ï¿½ï¿½ ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø¸ï¿½ ack=y ACK=1
     int ReSendCount = 0;
-    cout<<"----------------½ÓÊÜµÚ¶þ´Î»ÓÊÖ-----------------"<<endl;
+    cout<<"----------------ï¿½ï¿½ï¿½ÜµÚ¶ï¿½ï¿½Î»ï¿½ï¿½ï¿½-----------------"<<endl;
     while(1){
         int recvSize2 = recvfrom(clientSocket, (char *)(&Packet2), sizeof(Packet2), 0, (SOCKADDR*)&serverAddr, &AddrLen);
         if (recvSize2 > 0) {
             if((Packet2.type & ACK) && Packet2.ack_no == Packet1.seq_no+1 && Packet2.Check()){
-                cout<<"Client½ÓÊÜµÚ¶þ´Î»ÓÊÖÏûÏ¢:ACK!"<<endl;
-                cout<<"µÚ¶þ´Î»ÓÊÖ³É¹¦£¡"<<endl;
+                cout<<"Clientï¿½ï¿½ï¿½ÜµÚ¶ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢:ACK!"<<endl;
+                cout<<"ï¿½Ú¶ï¿½ï¿½Î»ï¿½ï¿½Ö³É¹ï¿½ï¿½ï¿½"<<endl;
                 break;
             }
             else{
                 if(!(Packet2.type & ACK)){
-                    cout<<"µÚ¶þ´Î»ÓÊÖ±ê¼ÇÃ»ÓÐACK"<<endl;
+                    cout<<"ï¿½Ú¶ï¿½ï¿½Î»ï¿½ï¿½Ö±ï¿½ï¿½Ã»ï¿½ï¿½ACK"<<endl;
                     return false;
                 }
                 else if(Packet2.ack_no != Packet1.seq_no+1){
-                    cout<<"µÚ¶þ´Î»ÓÊÖÐòÁÐºÅ´íÎó"<<endl;
+                    cout<<"ï¿½Ú¶ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÐºÅ´ï¿½ï¿½ï¿½"<<endl;
                     return false;
                 }
                 else if(!Packet2.Check()){
-                    cout<<"µÚ¶þ´Î»ÓÊÖÐ£ÑéºÍ´íÎó"<<endl;
+                    cout<<"ï¿½Ú¶ï¿½ï¿½Î»ï¿½ï¿½ï¿½Ð£ï¿½ï¿½Í´ï¿½ï¿½ï¿?"<<endl;
                     return false;
                 }
             }
         }
-        //³¬Ê±´¦Àí£¬ÖØÐÂ·¢ËÍÊý¾Ý°ü
+        //ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý°ï¿½
         if(clock() - start1 > TIMEOUT_MILLISECONDS){
             if(ReSendCount == MAX_REPEAT_TIMES){
-                cout<<"µÚ¶þ´Î»ÓÊÖ³¬Ê±,ÖØ´«´ÎÊý³¬¹ý"<<MAX_REPEAT_TIMES<<"´Î£¬Á¬½ÓÊ§°Ü£¡"<<endl;
+                cout<<"ï¿½Ú¶ï¿½ï¿½Î»ï¿½ï¿½Ö³ï¿½Ê±,ï¿½Ø´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"<<MAX_REPEAT_TIMES<<"ï¿½Î£ï¿½ï¿½ï¿½ï¿½ï¿½Ê§ï¿½Ü£ï¿½"<<endl;
                 return false;
             }
             ReSendCount++;
-            cout<<"µÚ¶þ´Î»ÓÊÖ³¬Ê±,ÖØÐÂ·¢ËÍµÚÒ»´Î»ÓÊÖÊý¾Ý°ü......"<<endl;
+            cout<<"ï¿½Ú¶ï¿½ï¿½Î»ï¿½ï¿½Ö³ï¿½Ê±,ï¿½ï¿½ï¿½Â·ï¿½ï¿½Íµï¿½Ò»ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý°ï¿½......"<<endl;
             int SendSize = sendto(clientSocket, (char *)(&Packet1), sizeof(Packet1), 0, (SOCKADDR*)&serverAddr, AddrLen);
             start1 = clock();
             if (SendSize <=0) {
-                cout<<"µÚÒ»´Î»ÓÊÖÔÙ´Î·¢ËÍÊ§°Ü£¡"<<endl;
+                cout<<"ï¿½ï¿½Ò»ï¿½Î»ï¿½ï¿½ï¿½ï¿½Ù´Î·ï¿½ï¿½ï¿½Ê§ï¿½Ü£ï¿½"<<endl;
                 return false;
             }
             else{
-                cout<<"µÚÒ»´Î»ÓÊÖÔÙ´Î·¢ËÍ³É¹¦£¡"<<endl;
+                cout<<"ï¿½ï¿½Ò»ï¿½Î»ï¿½ï¿½ï¿½ï¿½Ù´Î·ï¿½ï¿½Í³É¹ï¿½ï¿½ï¿½"<<endl;
                 continue;
             }
         }
     }
 
-    //µÚÈý´Î»ÓÊÖ ½ÓÊÜ·þÎñÆ÷Êý¾Ý°ü FIN=1 ACK=1 seq=z
-    cout<<"----------------½ÓÊÜµÚÈý´Î»ÓÊÖ-----------------"<<endl;
+    //ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ü·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý°ï¿½ FIN=1 ACK=1 seq=z
+    cout<<"----------------ï¿½ï¿½ï¿½Üµï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½-----------------"<<endl;
     while(1){
         int recvSize3 = recvfrom(clientSocket, (char *)(&Packet3), sizeof(Packet3), 0, (SOCKADDR*)&serverAddr, &AddrLen);
         if(recvSize3 <= 0){
-            cout<<"½ÓÊÜµÚÈý´Î»ÓÊÖÊ§°Ü£¡"<<endl;
+            cout<<"ï¿½ï¿½ï¿½Üµï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½Ê§ï¿½Ü£ï¿½"<<endl;
             return false;
         }
         else if (recvSize3 > 0) {
             if((Packet3.type & FIN) && (Packet3.type & ACK) && Packet3.Check() && Packet3.ack_no == Packet2.ack_no){
-                cout<<"Client½ÓÊÜµÚÈý´Î»ÓÊÖÏûÏ¢:FIN,ACK!"<<endl;
+                cout<<"Clientï¿½ï¿½ï¿½Üµï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢:FIN,ACK!"<<endl;
                 break;
             }
             else{
                 if(!(Packet3.type & FIN) || !(Packet3.type & ACK)){
-                    cout<<"µÚÈý´Î»ÓÊÖ±ê¼ÇÃ»ÓÐFIN/ACK"<<endl;
+                    cout<<"ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½Ö±ï¿½ï¿½Ã»ï¿½ï¿½FIN/ACK"<<endl;
                     return false;
                 }
                 else if(Packet3.ack_no != Packet2.ack_no){
-                    cout<<"µÚÈý´Î»ÓÊÖÐòÁÐºÅ´íÎó"<<endl;
+                    cout<<"ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÐºÅ´ï¿½ï¿½ï¿½"<<endl;
                     return false;
                 }
                 else if(!Packet3.Check()){
-                    cout<<"µÚÈý´Î»ÓÊÖÐ£ÑéºÍ´íÎó"<<endl;
+                    cout<<"ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½Ð£ï¿½ï¿½Í´ï¿½ï¿½ï¿?"<<endl;
                     return false;
                 }
             }
         }
     }
 
-    cout<<"----------------·¢ËÍµÚËÄ´Î»ÓÊÖ-----------------"<<endl;
-    //µÚËÄ´Î»ÓÊÖ ACK=1 seq=z+1
+    cout<<"----------------ï¿½ï¿½ï¿½Íµï¿½ï¿½Ä´Î»ï¿½ï¿½ï¿½-----------------"<<endl;
+    //ï¿½ï¿½ï¿½Ä´Î»ï¿½ï¿½ï¿½ ACK=1 seq=z+1
     Packet4.ScrPort = CLIENT_PORT;
     Packet4.DestPort = ROUTER_PORT;
     Packet4.type = ACK;
     Packet4.seq_no = Packet3.ack_no;
-    Packet4.ack_no = Packet3.seq_no+1; //ÕâÀïµÄack_noÊÇÉÏÒ»¸öÊý¾Ý°üµÄseq_no+1
+    Packet4.ack_no = Packet3.seq_no+1; //ï¿½ï¿½ï¿½ï¿½ï¿½ack_noï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½Ý°ï¿½ï¿½ï¿½seq_no+1
     Packet4.setChecksum();
 
     int sendSize4 = sendto(clientSocket, (char *)(&Packet4), sizeof(Packet4), 0, (SOCKADDR*)&serverAddr, AddrLen);
     if (sendSize4 <= 0) {
-        cout<<"µÚËÄ´Î»ÓÊÖÊ§°Ü£¡"<<endl;
+        cout<<"ï¿½ï¿½ï¿½Ä´Î»ï¿½ï¿½ï¿½Ê§ï¿½Ü£ï¿½"<<endl;
         return false;
     }
-    cout<<"Client·¢ËÍµÚËÄ´Î»ÓÊÖÏûÏ¢:ACK!"<<endl;
+    cout<<"Clientï¿½ï¿½ï¿½Íµï¿½ï¿½Ä´Î»ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢:ACK!"<<endl;
 
-    //µÈ´ý·þÎñÆ÷½øÈë2MSL×´Ì¬
+    //ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½2MSL×´Ì¬
     int tclock = clock();
     cout<<"client wait 2MSL~"<<endl;
     Packet PacketTemp;
     while(clock() - tclock < 2*TIMEOUT_MILLISECONDS){
         int recvSize = recvfrom(clientSocket, (char *)(&PacketTemp), sizeof(PacketTemp), 0, (SOCKADDR*)&serverAddr, &AddrLen);
         if(recvSize == 0){
-            cout<<"¹Ø±ÕÁ¬½ÓÊ§°Ü£¡"<<endl;
+            cout<<"ï¿½Ø±ï¿½ï¿½ï¿½ï¿½ï¿½Ê§ï¿½Ü£ï¿½"<<endl;
             return false;
         }
         else if (recvSize > 0) {
             int sendSize= sendto(clientSocket, (char *)(&Packet4), sizeof(Packet4), 0, (SOCKADDR*)&serverAddr, AddrLen);
-            cout<<"ÖØÐÂ»Ø¸´ack"<<endl;
+            cout<<"ï¿½ï¿½ï¿½Â»Ø¸ï¿½ack"<<endl;
         }
     }
-    cout<<"-----------------ËÄ´Î»ÓÊÖ³É¹¦-----------------"<<endl;
+    cout<<"-----------------ï¿½Ä´Î»ï¿½ï¿½Ö³É¹ï¿½-----------------"<<endl;
     return true;
 }
 
-//·¢ËÍÊý¾Ý°ü
+//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý°ï¿½
 int ClientSendAndRecvPacket(Packet& sendPacket,SOCKET clientSocket, SOCKADDR_IN serverAddr){
-    int AddrLen = sizeof(serverAddr); //µØÖ·³¤¶È
+    int AddrLen = sizeof(serverAddr); //ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½
     int sendSize = sendto(clientSocket, (char *)(&sendPacket), sizeof(sendPacket), 0, (SOCKADDR*)&serverAddr, sizeof(SOCKADDR_IN));
     if (sendSize <= 0) {
         int error = WSAGetLastError();
-        cout << "·¢ËÍÊ§°Ü£¬´íÎó´úÂë£º" << error << endl;
+        cout << "ï¿½ï¿½ï¿½ï¿½Ê§ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ë£?" << error << endl;
         return false;
     }
-    cout<<endl<<"ClientÒÑ·¢ËÍ seq= "<<sendPacket.seq_no<<" ack= "<<sendPacket.ack_no<<" length= "<<sendPacket.length<<"µÄÊý¾Ý°ü"<<endl;
-    int TimesOfTimeOut = 0; //³¬Ê±´ÎÊý
+    cout<<endl<<"Clientï¿½Ñ·ï¿½ï¿½ï¿½ seq= "<<sendPacket.seq_no<<" ack= "<<sendPacket.ack_no<<" length= "<<sendPacket.length<<"ï¿½ï¿½ï¿½ï¿½ï¿½Ý°ï¿½"<<endl;
+    int TimesOfTimeOut = 0; //ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½
     clock_t start = clock();
 
     Packet RecvPacket;
@@ -269,25 +269,25 @@ int ClientSendAndRecvPacket(Packet& sendPacket,SOCKET clientSocket, SOCKADDR_IN 
             // cout<<"recvPacket.seq_no + recvPacket.length="<<RecvPacket.seq_no+RecvPacket.length<<endl;
 
             if((RecvPacket.type & REPEAT) && (RecvPacket.type & ACK)){
-                cout<<"ÊÕµ½ÐòÁÐºÅ´íÎóÊý¾Ý°ü£¬¿ÉÄÜÎªÖØ¸´Êý¾Ý°ü"<<endl;
+                cout<<"ï¿½Õµï¿½ï¿½ï¿½ï¿½ÐºÅ´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½Ø¸ï¿½ï¿½ï¿½ï¿½Ý°ï¿½"<<endl;
                 continue;
             }
 
             else if((RecvPacket.type & ACK) && RecvPacket.ack_no == sendPacket.seq_no+sendPacket.length){
-                cout<<"ClientÒÑÊÕµ½ seq= "<<std::dec <<RecvPacket.seq_no<<" ack= "<<RecvPacket.ack_no<<" length= "<<RecvPacket.length<<"µÄACK±¨ÎÄ"<<endl;
+                cout<<"Clientï¿½ï¿½ï¿½Õµï¿½ seq= "<<std::dec <<RecvPacket.seq_no<<" ack= "<<RecvPacket.ack_no<<" length= "<<RecvPacket.length<<"ï¿½ï¿½ACKï¿½ï¿½ï¿½ï¿½"<<endl;
                 return RecvPacket.seq_no;
             }
 
         }
-        //³¬Ê±´¦Àí
+        //ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½
         else if(clock() - start > TIMEOUT_MILLISECONDS){
             if(TimesOfTimeOut >= MAX_REPEAT_TIMES){
-                cout<<"³¬Ê±ÖØ´«¡¾"<<MAX_REPEAT_TIMES<<"¡¿´Î¡£´«ÊäÊ§°Ü£¡"<<endl;
+                cout<<"ï¿½ï¿½Ê±ï¿½Ø´ï¿½ï¿½ï¿½"<<MAX_REPEAT_TIMES<<"ï¿½ï¿½ï¿½Î¡ï¿½ï¿½ï¿½ï¿½ï¿½Ê§ï¿½Ü£ï¿½"<<endl;
                 return -1;
             }
             TimesOfTimeOut++;
             totalTimeOut++;
-            cout<<"¡¾³¬Ê±ÖØ´«¡¿ÐòÁÐºÅÎª seq= "<<sendPacket.seq_no<<"µÄ±¨ÎÄ³¬Ê±,ÖØÐÂ·¢ËÍ"<<endl;;
+            cout<<"ï¿½ï¿½ï¿½ï¿½Ê±ï¿½Ø´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ðºï¿½Îª seq= "<<sendPacket.seq_no<<"ï¿½Ä±ï¿½ï¿½Ä³ï¿½Ê±,ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½"<<endl;;
             sendto(clientSocket, (char *)(&sendPacket), sizeof(sendPacket), 0, (SOCKADDR*)&serverAddr, sizeof(SOCKADDR_IN));
             start = clock();
         }
@@ -295,38 +295,38 @@ int ClientSendAndRecvPacket(Packet& sendPacket,SOCKET clientSocket, SOCKADDR_IN 
     }
 }
 
-//´«ÊäÎÄ¼þ
+//ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½
 void ClientSendFile(string filename,SOCKET clientSocket, SOCKADDR_IN serverAddr){
-    //´ò¿ªÎÄ¼þ
+    //ï¿½ï¿½ï¿½Ä¼ï¿½
     ifstream file(filename,ios::in|ios::binary);
     if(!file.is_open()){
-        cout<<"ÎÄ¼þ´ò¿ªÊ§°Ü£¡"<<endl;
+        cout<<"ï¿½Ä¼ï¿½ï¿½ï¿½Ê§ï¿½Ü£ï¿½"<<endl;
         return ;
     }
-    cout<<"ÎÄ¼þ´ò¿ª³É¹¦£¡"<<endl;
+    cout<<"ï¿½Ä¼ï¿½ï¿½ò¿ª³É¹ï¿½ï¿½ï¿½"<<endl;
 
-    //»ñÈ¡ÎÄ¼þ´óÐ¡
+    //ï¿½ï¿½È¡ï¿½Ä¼ï¿½ï¿½ï¿½Ð¡
     file.seekg(0,ios::end);
     int FileSize = file.tellg();
     file.seekg(0,ios::beg);
-    cout<<"ÎÄ¼þ´óÐ¡Îª£º"<<FileSize<<"B"<<endl;
+    cout<<"ï¿½Ä¼ï¿½ï¿½ï¿½Ð¡Îªï¿½ï¿½"<<FileSize<<"B"<<endl;
 
-    //¶ÁÈ¡ÎÄ¼þÄÚÈÝ
+    //ï¿½ï¿½È¡ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½
     char *filebuf = new char[FileSize];
     if (filebuf == NULL)
     {
-        std::cerr << "ÄÚ´æ·ÖÅäÊ§°Ü" << std::endl;
+        std::cerr << "ï¿½Ú´ï¿½ï¿½ï¿½ï¿½Ê§ï¿½ï¿?" << std::endl;
         file.close();
         return;
     }
 
     file.read(filebuf,FileSize);
     file.close();
-    cout<<"ÎÄ¼þ¶ÁÈ¡³É¹¦£¡"<<endl;
+    cout<<"ï¿½Ä¼ï¿½ï¿½ï¿½È¡ï¿½É¹ï¿½ï¿½ï¿½"<<endl;
 
     string FileSize_str=std::to_string(FileSize);
 
-    //»ñÈ¡ÎÄ¼þÃû
+    //ï¿½ï¿½È¡ï¿½Ä¼ï¿½ï¿½ï¿½
     string FILENAME;
     int i;
     for(i=filename.length()-1;i>=0;i--){
@@ -335,42 +335,42 @@ void ClientSendFile(string filename,SOCKET clientSocket, SOCKADDR_IN serverAddr)
     for(int j=i+1;j<filename.length();j++){
         FILENAME += filename[j];
     }
-    cout<<"ÎÄ¼þÃûÎª£º"<<FILENAME<<endl;
+    cout<<"ï¿½Ä¼ï¿½ï¿½ï¿½Îªï¿½ï¿½"<<FILENAME<<endl;
 
     int start = clock();
 
-    //·¢ËÍÎÄ¼þÃûºÍÎÄ¼þ´óÐ¡
-    cout<<"----------------¿ªÊ¼·¢ËÍÎÄ¼þ"<<FILENAME<<"µÄÐÅÏ¢--------------"<<endl;
+    //ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½Ð¡
+    cout<<"----------------ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½"<<FILENAME<<"ï¿½ï¿½ï¿½ï¿½Ï¢--------------"<<endl;
     totalTimeOut = 0;
-    Packet FileInfoPacket;
-    FileInfoPacket.ScrPort = CLIENT_PORT;
-    FileInfoPacket.DestPort = ROUTER_PORT;
-    //FileInfoPacket.length = FILENAME.length()+1; //²¹³ä½áÎ²·ûºÅ
-    FileInfoPacket.length = FileSize; //²¹³ä½áÎ²·ûºÅ
-    FileInfoPacket.type = INFO;
-    FileInfoPacket.seq_no = ++ClientSeq;
+    Packet ContentPacket;
+    ContentPacket.ScrPort = CLIENT_PORT;
+    ContentPacket.DestPort = ROUTER_PORT;
+    //ContentPacket.length = FILENAME.length()+1; //ï¿½ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿?
+    ContentPacket.length = FileSize; //ï¿½ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½ï¿?
+    ContentPacket.type = INFO;
+    ContentPacket.seq_no = ++ClientSeq;
 
 
     for(int i=0;i<FILENAME.length();i++){
-        FileInfoPacket.data[i] = FILENAME[i];
+        ContentPacket.data[i] = FILENAME[i];
     }
-    FileInfoPacket.data[FILENAME.length()] = '\0';
+    ContentPacket.data[FILENAME.length()] = '\0';
 
-    FileInfoPacket.setChecksum();
+    ContentPacket.setChecksum();
 
-    int sendSize1 = ClientSendAndRecvPacket(FileInfoPacket,clientSocket,serverAddr);
+    int sendSize1 = ClientSendAndRecvPacket(ContentPacket,clientSocket,serverAddr);
     if(sendSize1 == -1){
-        cout<<"ÎÄ¼þÐÅÏ¢·¢ËÍÊ§°Ü"<<endl;
+        cout<<"ï¿½Ä¼ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½Ê§ï¿½ï¿½"<<endl;
         return ;
     }
-    cout<<">>>>>>>>>>>>>>³É¹¦·¢ËÍÎÄ¼þÐÅÏ¢<<<<<<<<<<<<<<<"<<endl;
+    cout<<">>>>>>>>>>>>>>ï¿½É¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½Ï¢<<<<<<<<<<<<<<<"<<endl;
 
-    //·¢ËÍÎÄ¼þÄÚÈÝ
-    cout<<"-----------------¿ªÊ¼·¢ËÍÎÄ¼þÄÚÈÝ-------------------"<<endl;
-    int FillCount = FileSize / MAX_PACKET_SIZE; //È«²¿×°ÂúµÄ±¨ÎÄ¸öÊý
-    int LeaveSize = FileSize % MAX_PACKET_SIZE; //Ê£Óà±¨ÎÄ´óÐ¡
+    //ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½
+    cout<<"-----------------ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½-------------------"<<endl;
+    int FillCount = FileSize / MAX_PACKET_SIZE; //È«ï¿½ï¿½×°ï¿½ï¿½ï¿½Ä±ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½
+    int LeaveSize = FileSize % MAX_PACKET_SIZE; //Ê£ï¿½à±¨ï¿½Ä´ï¿½Ð¡
 
-    prePacket = FileInfoPacket; //¼ÇÂ¼ÉÏÒ»¸ö·¢ËÍµÄÊý¾Ý°ü
+    prePacket = ContentPacket; //ï¿½ï¿½Â¼ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½Íµï¿½ï¿½ï¿½ï¿½Ý°ï¿½
     int preSeq = sendSize1;
 
     for(int i=0;i<FillCount;i++){
@@ -388,15 +388,15 @@ void ClientSendFile(string filename,SOCKET clientSocket, SOCKADDR_IN serverAddr)
         ContentPacket.setChecksum();
         int sendSize2 = ClientSendAndRecvPacket(ContentPacket,clientSocket,serverAddr);
         if(sendSize2<0){
-            cout<<"ÎÄ¼þÊý¾Ý·¢ËÍÊ§°Ü"<<endl;
+            cout<<"ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½Ý·ï¿½ï¿½ï¿½Ê§ï¿½ï¿½"<<endl;
             return ;
         }
-        cout<<"³É¹¦·¢ËÍ²¢È·ÈÏµÚ"<<i+1<<"¸ö×î´ó×°ÔØ±¨ÎÄ¶Î,ÐòÁÐºÅ seq= "<<ContentPacket.seq_no<<",Êý¾Ý³¤¶È length= "<<ContentPacket.length<<endl;
+        cout<<"ï¿½É¹ï¿½ï¿½ï¿½ï¿½Í²ï¿½È·ï¿½Ïµï¿½"<<i+1<<"ï¿½ï¿½ï¿½ï¿½ï¿½×°ï¿½Ø±ï¿½ï¿½Ä¶ï¿?,ï¿½ï¿½ï¿½Ðºï¿½ seq= "<<ContentPacket.seq_no<<",ï¿½ï¿½ï¿½Ý³ï¿½ï¿½ï¿½ length= "<<ContentPacket.length<<endl;
         prePacket = ContentPacket;
         preSeq = sendSize2;
 
     }
-    cout<<endl<<"³É¹¦·¢ËÍ"<<FillCount<<"¸öÊý¾Ý°ü,¼´½«´«ÊäÊ£Óà²¿·ÖÊý¾Ý°ü"<<endl;
+    cout<<endl<<"ï¿½É¹ï¿½ï¿½ï¿½ï¿½ï¿½"<<FillCount<<"ï¿½ï¿½ï¿½ï¿½ï¿½Ý°ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê£ï¿½à²¿ï¿½ï¿½ï¿½ï¿½ï¿½Ý°ï¿½"<<endl;
     if(LeaveSize != 0){
         Packet ContentPacket;
         ContentPacket.ScrPort = CLIENT_PORT;
@@ -413,26 +413,26 @@ void ClientSendFile(string filename,SOCKET clientSocket, SOCKADDR_IN serverAddr)
         ContentPacket.setChecksum();
         int sendSize3 = ClientSendAndRecvPacket(ContentPacket,clientSocket,serverAddr); 
         if(sendSize3<0){
-            cout<<"ÎÄ¼þÊý¾Ý·¢ËÍÊ§°Ü"<<endl;
+            cout<<"ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½Ý·ï¿½ï¿½ï¿½Ê§ï¿½ï¿½"<<endl;
             return ;
         }
-        cout<<"³É¹¦·¢ËÍ×îºóÒ»¸öÊý¾Ý°ü"<<endl;
+        cout<<"ï¿½É¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½Ý°ï¿?"<<endl;
         prePacket = ContentPacket;
         preSeq = sendSize3;
     }
 
     delete[] filebuf;
 
-    //¼ÆËã´«ÊäÊ±¼äÓëÍÌÍÂÂÊ
+    //ï¿½ï¿½ï¿½ã´«ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     int end = clock();
-    cout<<endl<<"-----------------´«ÊäÇé¿ö×Ü½á---------------"<<endl;
+    cout<<endl<<"-----------------ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü½ï¿?---------------"<<endl;
     double time = (double)(end-start)/CLOCKS_PER_SEC;
-    cout<<"´«ÊäÊ±¼ä£º"<<time<<"s"<<endl;
+    cout<<"ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ä£º"<<time<<"s"<<endl;
     float throughput = (float)FileSize/time;
-    cout<<"ÍÌÍÂÂÊ£º"<<throughput<<"B/s = "<<throughput/1024<<"KB/s"<<endl;
-    cout<<"´«ÊäÎÄ¼þ´óÐ¡£º"<<FileSize<<"B = "<<FileSize/1024<<"KB"<<endl;
-    cout<<"³¬Ê±·¢ËÍÊý¾Ý°ü£º"<<totalTimeOut<<endl;
-    cout<<"-----------------´«ÊäÇé¿ö×Ü½á---------------"<<endl;
+    cout<<"ï¿½ï¿½ï¿½ï¿½ï¿½Ê£ï¿½"<<throughput<<"B/s = "<<throughput/1024<<"KB/s"<<endl;
+    cout<<"ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½"<<FileSize<<"B = "<<FileSize/1024<<"KB"<<endl;
+    cout<<"ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý°ï¿½ï¿½ï¿½"<<totalTimeOut<<endl;
+    cout<<"-----------------ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü½ï¿?---------------"<<endl;
     return ;
 }
 
@@ -440,7 +440,7 @@ int main() {
 WSADATA wsaData;
     SOCKET clientSocket;
 
-    // ³õÊ¼»¯Winsock
+    // ï¿½ï¿½Ê¼ï¿½ï¿½Winsock
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
     {
         std::cerr << "WSAStartup failed!" << std::endl;
@@ -451,12 +451,12 @@ WSADATA wsaData;
         std::cout << "WSAStartup success!" << std::endl;
     }
 
-    // ==============¶¨Òå·þÎñÆ÷µÄIPµØÖ·ºÍ¶Ë¿ÚºÅ£¬ÒÔ±ã¿Í»§¶ËÖªµÀÓ¦½«Êý¾Ý·¢ËÍµ½ÄÄÀï================
+    // ==============ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½IPï¿½ï¿½Ö·ï¿½Í¶Ë¿ÚºÅ£ï¿½ï¿½Ô±ï¿½Í»ï¿½ï¿½ï¿½Öªï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½Ý·ï¿½ï¿½Íµï¿½ï¿½ï¿½ï¿½ï¿?================
 
     clientSocket = socket(AF_INET, SOCK_DGRAM, 0);
 
     unsigned long on = 1;
-    ioctlsocket(clientSocket, FIONBIO, &on); // ÉèÖÃ·Ç×èÈû
+    ioctlsocket(clientSocket, FIONBIO, &on); // ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ï¿½ï¿½
 
     if (clientSocket == INVALID_SOCKET)
     {
@@ -467,39 +467,39 @@ WSADATA wsaData;
     {
         std::cout << "socket success!" << std::endl;
     }
-    // ³õÊ¼»¯·þÎñÆ÷µØÖ·
-    // AF_INET: ±íÊ¾¸ÃÌ×½Ó×ÖÊ¹ÓÃIPv4µØÖ·¡£
-    // SOCK_DGRAM: ±íÊ¾¸ÃÌ×½Ó×ÖÊÇÒ»¸öÊý¾Ý±¨Ì×½Ó×Ö£¨UDP£©¡£
-    // 0: Ö¸¶¨Ð­ÒéÀàÐÍ¡£¶ÔÓÚUDP£¬ÕâÀïÓ¦Îª0
+    // ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·
+    // AF_INET: ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½×½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½IPv4ï¿½ï¿½Ö·ï¿½ï¿½
+    // SOCK_DGRAM: ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½×½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½Ý±ï¿½ï¿½×½ï¿½ï¿½Ö£ï¿½UDPï¿½ï¿½ï¿½ï¿½
+    // 0: Ö¸ï¿½ï¿½Ð­ï¿½ï¿½ï¿½ï¿½ï¿½Í¡ï¿½ï¿½ï¿½ï¿½ï¿½UDPï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦Îª0
     sockaddr_in serverAddr;
     serverAddr.sin_family = AF_INET;                          // IPv4
-    serverAddr.sin_port = htons(ROUTER_PORT);                  // ¶Ë¿ÚºÅ
-    serverAddr.sin_addr.S_un.S_addr = inet_addr("127.0.0.1"); // ·þÎñÆ÷IPµØÖ·
+    serverAddr.sin_port = htons(ROUTER_PORT);                  // ï¿½Ë¿Úºï¿½
+    serverAddr.sin_addr.S_un.S_addr = inet_addr("127.0.0.1"); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½IPï¿½ï¿½Ö·
 
-    // ³õÊ¼»¯¿Í»§¶ËµØÖ·
+    // ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½Í»ï¿½ï¿½Ëµï¿½Ö·
     sockaddr_in clientAddr;
-    clientAddr.sin_family = AF_INET;                          // µØÖ·ÀàÐÍ
-    clientAddr.sin_addr.S_un.S_addr = inet_addr("127.0.0.1"); // µØÖ·
-    clientAddr.sin_port = htons(CLIENT_PORT);                  // ¶Ë¿ÚºÅ
+    clientAddr.sin_family = AF_INET;                          // ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½
+    clientAddr.sin_addr.S_un.S_addr = inet_addr("127.0.0.1"); // ï¿½ï¿½Ö·
+    clientAddr.sin_port = htons(CLIENT_PORT);                  // ï¿½Ë¿Úºï¿½
     int bindtemp = bind(clientSocket, (LPSOCKADDR)&clientAddr, sizeof(clientAddr));
 
-    std::srand(time(0)); // ÉèÖÃËæ»úÊýÖÖ×ÓÓÃÓÚËæ»úÎÕÊÖÊ±ºòÐòÁÐºÅ
+    std::srand(time(0)); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ðºï¿½
     ClientSeq = rand()%10000;
 
-    cout<<"ÎÕÊÖÇ°µÄClientSeq= "<<ClientSeq<<endl;
+    cout<<"ï¿½ï¿½ï¿½ï¿½Ç°ï¿½ï¿½ClientSeq= "<<ClientSeq<<endl;
 
 
-    //Á¬½Ó·þÎñÆ÷
+    //ï¿½ï¿½ï¿½Ó·ï¿½ï¿½ï¿½ï¿½ï¿½
     int temp = Connect_Server(clientSocket,serverAddr);
 
-    cout<<"ÎÕÊÖºóµÄClientSeq= "<<ClientSeq<<endl;
+    cout<<"ï¿½ï¿½ï¿½Öºï¿½ï¿½ClientSeq= "<<ClientSeq<<endl;
 
     while(temp){
-        cout<<"ÇëÊäÈëÎÄ¼þÂ·¾¶£º"<<endl;
+        cout<<"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½Â·ï¿½ï¿½ï¿½ï¿½"<<endl;
         string filename;
         cin>>filename;
         ClientSendFile(filename,clientSocket,serverAddr);
-        cout<<"ÊÇ·ñ¼ÌÐø´«Êä£¿(n/n)"<<endl;
+        cout<<"ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ä£?(n/n)"<<endl;
         char c;
         cin>>c;
         if(c == 'n') {
@@ -507,9 +507,9 @@ WSADATA wsaData;
             break;
         }
     }
-    cout<<"¹Ø±ÕÁ¬½Ó£¡"<<endl;
+    cout<<"ï¿½Ø±ï¿½ï¿½ï¿½ï¿½Ó£ï¿½"<<endl;
 
-    //--------------ËÄ´Î»ÓÊÖ-------------------
+    //--------------ï¿½Ä´Î»ï¿½ï¿½ï¿½-------------------
     std::srand(time(nullptr));
     ClientSeq = rand()%10000;
 

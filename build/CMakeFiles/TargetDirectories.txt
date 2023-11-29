@@ -1,0 +1,4 @@
+C:/Users/liuvivian/Desktop/computer_network/build/CMakeFiles/client.dir
+C:/Users/liuvivian/Desktop/computer_network/build/CMakeFiles/server.dir
+C:/Users/liuvivian/Desktop/computer_network/build/CMakeFiles/edit_cache.dir
+C:/Users/liuvivian/Desktop/computer_network/build/CMakeFiles/rebuild_cache.dir

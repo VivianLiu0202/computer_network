@@ -59,5 +59,6 @@
   "files.associations": {
     "*.s": "arm",
     "pthread.h": "c"
-  }
+  },
+  "cmake.sourceDirectory": "C:/Users/liuvivian/Desktop/computer_network/lab3_2"
 }
