@@ -221,7 +221,7 @@ bool ServerReceivePacket(Packet& recvPacket, SOCKET serverSocket, SOCKADDR_IN cl
 			}
 
 			//如果seq！= 期待值，则返回
-			else if (recvPacket.Check() && (recvPacket.seq_no > expectSeq))
+			else if (recvPacket.Check() && (recvPacket.seq_no >= expectSeq) && DisorderPacketNum <= WINODWS_SIZE)
 			{
                 DisorderPacketNum++;
 				//回复ACK
@@ -240,6 +240,18 @@ bool ServerReceivePacket(Packet& recvPacket, SOCKET serverSocket, SOCKADDR_IN cl
                     fileBufferCopy[(DisorderPacketNum)*MAX_PACKET_SIZE+i] = recvPacket.data[i];
                 }
 			}
+            else if(recvPacket.Check() && recvPacket.seq_no < expectSeq){
+                //回复ACK
+				Packet sendPacket;
+				sendPacket.ScrPort = SERVER_PORT;
+				sendPacket.DestPort = ROUTER_PORT;
+				sendPacket.type += ACK;
+				sendPacket.ack_no = recvPacket.seq_no;
+
+				sendPacket.setChecksum();
+				sendto(serverSocket, (char*)&sendPacket, sizeof(sendPacket), 0, (sockaddr*)&clientAddr, sizeof(SOCKADDR_IN));
+				cout << "\n【失序！】server收到 Seq = " << recvPacket.seq_no << "的报文段，并发送 Ack = " << sendPacket.ack_no << " 的回复报文段" << endl;
+            }
 		}
 		else if (recvSize == 0)
 			return false;
@@ -296,6 +308,7 @@ void ServerReceiveFile(SOCKET serverSocket, SOCKADDR_IN clientAddr)
 				sendPacket.type += ACK;
                 sendPacket.type += REPEAT;
 				sendPacket.ack_no = recvInfoPacket.seq_no; // 确认号真实序列号
+                //sendPacket.sackOptions = std::make_pair(expectSeq, expectSeq);
 
 				sendPacket.setChecksum();
 				sendto(serverSocket, (char*)&sendPacket, sizeof(sendPacket), 0, (sockaddr*)&clientAddr, sizeof(SOCKADDR_IN));

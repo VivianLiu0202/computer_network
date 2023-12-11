@@ -11,6 +11,7 @@
 #include <string>
 #include <time.h>
 #include <vector>
+#include <utility> 
 #include <fstream>
 #include <assert.h>
 
@@ -20,7 +21,7 @@
 const int MAX_BUFFER_SIZE = 20000000; //最大文件大小
 const int MAX_PACKET_SIZE = 10000; //单个数据包大小
 const int MAX_REPEAT_TIMES = 60000; //最大发送次数
-const int TIMEOUT_MILLISECONDS = 100; // 超时时间
+const int TIMEOUT_MILLISECONDS = 500; // 超时时间
 const int WINODWS_SIZE = 5; // 窗口大小
 
 const char* IP = "127.0.0.1"; //服务器、路由器、客户端IP地址
@@ -42,7 +43,7 @@ struct Packet {
     u_int length; // 消息大小
     u_short checksum; // 校验和
     char data[MAX_PACKET_SIZE]; // 报文数据
-    bool visited[2000];//SACK中指明只接收了哪些特定的分段
+    //std::pair<int, int> sackOptions;
     Packet();
     void setChecksum();
     bool Check();
@@ -59,8 +60,7 @@ Packet::Packet(){
     ack_no = 0;
     length = 0;
     type = 0;
-    for(int i=0;i<2000;i++)
-        visited[i] = false;
+    //sackOptions = std::make_pair(-1, -1);
 }
 
 /**

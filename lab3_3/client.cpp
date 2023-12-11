@@ -13,28 +13,12 @@ int totalTimeOut = 0;
 
 int base = 0;
 int nextseqnum = 0;
-int pktStart;
-bool sendAgain = 0;
 bool finished = 0;
 
-int last_ack = 0;        // lab3_3新增，用于在客户端标定乱序到达的最大确认号
-int disorderPackNum = 0; // lab3_3新增，用于标定一个窗口内乱序到达的包的数量，主要用于提示输出
 int timers[1500];        // lab3_3新增，用于记录每个数据包的计时器,全局变量自动赋0
 
-int ReSend = 0;
-
-int checkTimeout(int a, int b)
-{
-    clockid_t now = clock();
-    for (int i = a; i < b; i++)
-    {
-        if (timers[i] == -1)
-            continue; // 已经被确认的包不用检查
-        if (now - timers[i] > TIMEOUT_MILLISECONDS)
-            return i;
-    }
-    return 0;
-}
+int needReSendPacket = 0; //lab3_3新增，用于保存需要重传的数据包序号
+int a,b;
 
 std::mutex mtx;
 //实现三次握手 ~
@@ -333,6 +317,13 @@ DWORD WINAPI recvThread(PVOID pParam)
                     cout << "【窗口信息】 窗口总大小：" << WINODWS_SIZE << "，base = "<<base<<" , nextseqnum = "<<nextseqnum<<",已发送但未收到ACK：" << nextseqnum - base << "，尚未发送：" << WINODWS_SIZE - (nextseqnum - base) <<'\n';
 
                 }
+                else if(recvPacket.ack_no < base){
+                    isVisited[recvPacket.ack_no] = true;
+                    std::lock_guard<std::mutex> lock(mtx);
+                    cout << "\n#----接收RECV----#Client已收到【ack = " << recvPacket.ack_no << "】的确认报文" << endl;
+                    //打印窗口情况
+                    cout << "【窗口信息】 窗口总大小：" << WINODWS_SIZE << "，base = "<<base<<" , nextseqnum = "<<nextseqnum<<",已发送但未收到ACK：" << nextseqnum - base << "，尚未发送：" << WINODWS_SIZE - (nextseqnum - base) <<'\n';
+                }
 			}
 			//若校验失败或ack不对，则忽略，继续等待
 		}
@@ -340,6 +331,24 @@ DWORD WINAPI recvThread(PVOID pParam)
 	return 0;
 }
 
+
+// 新增一个线程函数，用于管理所有数据包的计时器
+DWORD WINAPI TimerThread(PVOID pParam) {
+    parameters* pa = (parameters*)pParam;
+    int pktSum = pa->pktSum;
+
+    while (1) {
+        for (int i = a; i < b; ++i) {
+            std::lock_guard<std::mutex> lock(mtx);
+            if (timers[i] != -1 && clock() - timers[i] > TIMEOUT_MILLISECONDS) {
+                // 设置重传标志
+                needReSendPacket = i;
+            }
+        }
+        if (finished) break; // 检查是否完成了文件传输
+    }
+    return 0;
+}
 
 void ClientSendRecvFile(string filename, SOCKET clientSocket, SOCKADDR_IN serverAddr)
 {
@@ -387,11 +396,7 @@ void ClientSendRecvFile(string filename, SOCKET clientSocket, SOCKADDR_IN server
 	//=================== 创建接受消息线程 =====================
 	int pktSum = LeaveSize > 0 ? FillCount + 2 : FillCount + 1;
 
-	parameters param;
-	param.serverAddr = serverAddr;
-	param.clientSocket = clientSocket;
-	param.pktSum = pktSum;
-	HANDLE hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)recvThread, &param, 0, 0);
+,
 
 	while (1){
 		if (nextseqnum < base + WINODWS_SIZE && nextseqnum < pktSum)
@@ -439,15 +444,15 @@ void ClientSendRecvFile(string filename, SOCKET clientSocket, SOCKADDR_IN server
 		}
 
         //检查当前窗口中有没有超时现象
-        int a = base;
-        int b = nextseqnum;
-        ReSend = checkTimeout(a,b); //需要重新发送的数据包
+        a = base;
+        b = nextseqnum;
 
+        // 在适当的位置，检查并处理重传标志
 		//timeout
-		if (ReSend){
+		if (needReSendPacket){
 			Packet ContentPacket;
 			for (int i = base; i < nextseqnum; i++){
-                if(isVisited[i] == false && ReSend == i)  //超时，重传超时的这个数据包
+                if(isVisited[i] == false && needReSendPacket == i)  //超时，重传超时的这个数据包
                 {
                     int sendnum = i;
                     if (sendnum == 0){
@@ -489,14 +494,15 @@ void ClientSendRecvFile(string filename, SOCKET clientSocket, SOCKADDR_IN server
                     //Todo：为每一个数据包单独记录一个计时器
                 }
 			}
-            ReSend = 0;
-			// pktStart = clock();
-			// sendAgain = 0;
+            needReSendPacket = 0;
 		}
 		if (finished == 1) break;
 	}
 
 	CloseHandle(hThread);
+
+    WaitForSingleObject(hTimerThread, INFINITE);
+    CloseHandle(hTimerThread);
 	cout << "\n\n已发送并确认所有报文，文件传输成功！\n\n";
     delete[] filebuf;
 	//计算传输时间和吞吐率
